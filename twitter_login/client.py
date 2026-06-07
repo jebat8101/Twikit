@@ -4,6 +4,7 @@ import json
 from io import BufferedIOBase
 from logging import getLogger
 from pathlib import Path
+from typing import TYPE_CHECKING, Literal, overload, Any
 
 from .api import API
 from .auth_manager import AuthManager
@@ -17,6 +18,10 @@ from .models import Tweet, UploadedMedia, build_tweet_media_parameter
 from .pagination import PaginatedResult, PaginationContext
 from .parsers import get_cursors_from_entries, get_cursors_from_replace_entries, get_instructions, group_entries, handle_response_errors, parse_entries
 from .utils import optional_chaining
+
+if TYPE_CHECKING:
+    from .models import Tweet, User
+
 
 logger = getLogger(__name__)
 
@@ -157,6 +162,33 @@ class Client:
         )
         return Tweet._from_payload(tweet_payload, self)
 
+    @overload
+    async def search(
+        self,
+        query: str,
+        product: Literal[SearchTimelineProduct.USER],
+        count: int = ...,
+        cursor: str | None = ...,
+        query_source: SearchTimelineQuerySource = ...
+    ) -> PaginatedResult[User]:
+        ...
+    @overload
+    async def search(
+        self,
+        query: str,
+        product: Literal[
+            SearchTimelineProduct.LIVE,
+            SearchTimelineProduct.TOP,
+            SearchTimelineProduct.MEDIA,
+            SearchTimelineProduct.IMAGE,
+            SearchTimelineProduct.VIDEO
+        ],
+        count: int = ...,
+        cursor: str | None = ...,
+        query_source: SearchTimelineQuerySource = ...
+    ) -> PaginatedResult[Tweet]:
+        ...
+
     async def search(
         self,
         query: str,
@@ -164,7 +196,7 @@ class Client:
         count: int = 20,
         cursor: str | None = None,
         query_source: SearchTimelineQuerySource = SearchTimelineQuerySource.TYPED
-    ) -> PaginatedResult[Tweet]:
+    ) -> PaginatedResult[Any]:
         response = await self._api.gql.SearchTimeline(
             rawQuery=query,
             count=count,
