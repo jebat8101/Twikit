@@ -10,6 +10,7 @@ if TYPE_CHECKING:
 
 @model(reprs='id')
 class User:
+    # TODO this
     id: str
 
     @classmethod

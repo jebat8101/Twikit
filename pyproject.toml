@@ -1,0 +1,30 @@
+[project]
+name = "twitter_login"
+version = "0.1.0.dev1"
+description = "dev"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "bs4>=0.0.2",
+    "chompjs>=1.4.1",
+    "curl-cffi>=0.15.0",
+    "lxml>=6.1.1",
+    "mmh3>=5.2.1",
+    "pyotp>=2.9.0",
+    "stpyv8>=13.1.201.22",
+]
+
+[project.optional-dependencies]
+all = [
+    "av>=17.0.1",
+    "filetype>=1.2.0",
+    "typing-extensions>=4.15.0",
+]
+
+[dependency-groups]
+dev = [
+    "colorlog>=6.10.1",
+]
+
+[tool.setuptools]
+packages = ["twitter_login"]

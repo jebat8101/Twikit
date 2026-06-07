@@ -60,14 +60,6 @@ class UserAgent(NamedTuple):
     user_agent: str
 
 
-UA_WINDOWS_CHROME_142 = UserAgent(
-    ch_ua='"Chromium";v="142", "Google Chrome";v="142", "Not_A Brand";v="99"',
-    ch_ua_mobile="?0",
-    ch_ua_platform='"Windows"',
-    user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36'
-)
-
-
 class HeadersContext:
     # High entropy UA values are not supported.
     def __init__(self, domain: str, url: str, method: str, dest: FetchDest, is_user_access: bool, is_cors: bool) -> None:
@@ -148,9 +140,9 @@ class HeadersContext:
 
 
 class HeadersBuilder:
-    def __init__(self, domain: str = 'x.com', user_agent: UserAgent = UA_WINDOWS_CHROME_142) -> None:
-        self.domain = domain
+    def __init__(self, user_agent: UserAgent, domain: str = 'x.com') -> None:
         self.user_agent = user_agent
+        self.domain = domain
 
     def ua_headers(self):
         return {

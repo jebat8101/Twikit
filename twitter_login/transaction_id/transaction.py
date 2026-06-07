@@ -5,91 +5,73 @@ import time
 import random
 import base64
 import hashlib
-from typing import Union, List
 from functools import reduce
+from typing import Union, List, Optional
 from .cubic_curve import Cubic
 from .interpolate import interpolate
 from .rotation import convert_rotation_to_matrix
-from .utils import float_to_hex, is_odd, base64_encode, handle_x_migration
-
-ON_DEMAND_FILE_REGEX = re.compile(
-    r',(\d+):["\']ondemand\.s["\']', flags=(re.VERBOSE | re.MULTILINE))
-ON_DEMAND_HASH_PATTERN = r',{}:"([0-9a-f]+)"'
-INDICES_REGEX = re.compile(r'\[(\d+)\],\s*16')
+from .utils import Math, float_to_hex, is_odd, base64_encode, validate_response
+from .constants import INDICES_REGEX, ADDITIONAL_RANDOM_NUMBER, DEFAULT_KEYWORD
 
 
 class ClientTransaction:
-    ADDITIONAL_RANDOM_NUMBER = 3
-    DEFAULT_KEYWORD = "obfiowerehiring"
-    DEFAULT_ROW_INDEX = None
-    DEFAULT_KEY_BYTES_INDICES = None
 
-    def __init__(self):
-        self.home_page_response = None
-
-    async def init(self, session, headers):
-        home_page_response = await handle_x_migration(session, headers)
-
-        self.home_page_response = self.validate_response(home_page_response)
-        self.DEFAULT_ROW_INDEX, self.DEFAULT_KEY_BYTES_INDICES = await self.get_indices(
-            self.home_page_response, session, headers)
-        self.key = self.get_key(response=self.home_page_response)
+    def __init__(self, home_page_response: bs4.BeautifulSoup, ondemand_file_response: Union[bs4.BeautifulSoup, str], random_keyword: Optional[str] = None, random_number: Optional[int] = None):
+        validate_response(home_page_response)
+        # validate_response(ondemand_file_response)
+        if hasattr(ondemand_file_response, "text"):
+            ondemand_file_response = ondemand_file_response.text
+        if not isinstance(ondemand_file_response, str):
+            raise TypeError(f"invalid ondemand file response")
+        self.home_page_response = home_page_response
+        self.ondemand_file_response = ondemand_file_response
+        self.random_keyword = random_keyword or DEFAULT_KEYWORD
+        self.random_number = random_number or ADDITIONAL_RANDOM_NUMBER
+        self.row_index, self.key_bytes_indices = self.get_indices(
+            self.ondemand_file_response)
+        self.key = self.get_key(home_page_response=self.home_page_response)
         self.key_bytes = self.get_key_bytes(key=self.key)
         self.animation_key = self.get_animation_key(
-            key_bytes=self.key_bytes, response=self.home_page_response)
+            key_bytes=self.key_bytes, home_page_response=self.home_page_response)
 
-    async def get_indices(self, home_page_response, session, headers):
+    def get_indices(self, ondemand_file_response: str):
         key_byte_indices = []
-        response = self.validate_response(
-            home_page_response) or self.home_page_response
-        on_demand_match = ON_DEMAND_FILE_REGEX.search(str(response))
-        if on_demand_match:
-            chunk_index = on_demand_match.group(1)
-            hash_match = re.search(
-                ON_DEMAND_HASH_PATTERN.format(chunk_index), str(response))
-            if hash_match:
-                file_hash = hash_match.group(1)
-                on_demand_file_url = f"https://abs.twimg.com/responsive-web/client-web/ondemand.s.{file_hash}a.js"
-                on_demand_file_response = await session.request(method="GET", url=on_demand_file_url, headers=headers)
-                for item in INDICES_REGEX.finditer(on_demand_file_response.text):
-                    key_byte_indices.append(item.group(1))
+        key_byte_indices_match = INDICES_REGEX.finditer(
+            str(ondemand_file_response))
+        for item in key_byte_indices_match:
+            key_byte_indices.append(item.group(2))
         if not key_byte_indices:
             raise Exception("Couldn't get KEY_BYTE indices")
         key_byte_indices = list(map(int, key_byte_indices))
         return key_byte_indices[0], key_byte_indices[1:]
 
-    def validate_response(self, response: bs4.BeautifulSoup):
-        if not isinstance(response, bs4.BeautifulSoup):
-            raise Exception("invalid response")
-        return response
-
-    def get_key(self, response=None):
-        response = self.validate_response(response) or self.home_page_response
+    def get_key(self, home_page_response: bs4.BeautifulSoup) -> str:
         # <meta name="twitter-site-verification" content="mentU...+1yPz..../IcNS+......./RaF...R+b"/>
-        element = response.select_one("[name='twitter-site-verification']")
+        element: bs4.Tag = home_page_response.select_one(
+            "meta[name='twitter-site-verification']")
         if not element:
-            raise Exception("Couldn't get key from the page source")
+            raise Exception(
+                "Couldn't get [twitter-site-verification] key from the page source")
         return element.get("content")
 
-    def get_key_bytes(self, key: str):
+    def get_key_bytes(self, key: str) -> List[int]:
         return list(base64.b64decode(bytes(key, 'utf-8')))
 
-    def get_frames(self, response=None):
+    def get_frames(self, home_page_response: bs4.BeautifulSoup) -> bs4.ResultSet:
         # loading-x-anim-0...loading-x-anim-3
-        response = self.validate_response(response) or self.home_page_response
-        return response.select("[id^='loading-x-anim']")
+        return home_page_response.select("[id^='loading-x-anim']")
 
-    def get_2d_array(self, key_bytes: List[Union[float, int]], response, frames: bs4.ResultSet = None):
-        if not frames:
-            frames = self.get_frames(response)
+    def get_2d_array(self, key_bytes: List[Union[float, int]], home_page_response: bs4.BeautifulSoup, frames: Optional[bs4.ResultSet] = None) -> List[List[int]]:
+        if frames is None:
+            frames = self.get_frames(home_page_response=home_page_response)
         # return list(list(frames[key[5] % 4].children)[0].children)[1].get("d")[9:].split("C")
         return [[int(x) for x in re.sub(r"[^\d]+", " ", item).strip().split()] for item in list(list(frames[key_bytes[5] % 4].children)[0].children)[1].get("d")[9:].split("C")]
 
-    def solve(self, value, min_val, max_val, rounding: bool):
+    def solve(self, value, min_val, max_val, rounding: bool) -> Union[float, int]:
         result = value * (max_val-min_val) / 255 + min_val
         return math.floor(result) if rounding else round(result, 2)
 
-    def animate(self, frames, target_time):
+    def animate(self, frames: List[int], target_time: float) -> str:
         # from_color = f"#{''.join(['{:x}'.format(digit) for digit in frames[:3]])}"
         # to_color = f"#{''.join(['{:x}'.format(digit) for digit in frames[3:6]])}"
         # from_rotation = "rotate(0deg)"
@@ -109,7 +91,7 @@ class ClientTransaction:
         cubic = Cubic(curves)
         val = cubic.get_value(target_time)
         color = interpolate(from_color, to_color, val)
-        color = [value if value > 0 else 0 for value in color]
+        color = [max(0, min(255, value)) for value in color]
         rotation = interpolate(from_rotation, to_rotation, val)
         matrix = convert_rotation_to_matrix(rotation[0])
         # str_arr = [format(int(round(color[i])), '02x') for i in range(len(color) - 1)]
@@ -126,37 +108,44 @@ class ClientTransaction:
         animation_key = re.sub(r"[.-]", "", "".join(str_arr))
         return animation_key
 
-    def get_animation_key(self, key_bytes, response):
+    def get_animation_key(self, key_bytes: List[int], home_page_response: bs4.BeautifulSoup) -> str:
         total_time = 4096
         # row_index, frame_time = [key_bytes[2] % 16, key_bytes[12] % 16 * (key_bytes[14] % 16) * (key_bytes[7] % 16)]
         # row_index, frame_time = [key_bytes[2] % 16, key_bytes[2] % 16 * (key_bytes[42] % 16) * (key_bytes[45] % 16)]
 
-        row_index = key_bytes[self.DEFAULT_ROW_INDEX] % 16
+        row_index = key_bytes[self.row_index] % 16
         frame_time = reduce(lambda num1, num2: num1*num2,
-                            [key_bytes[index] % 16 for index in self.DEFAULT_KEY_BYTES_INDICES])
-        arr = self.get_2d_array(key_bytes, response)
+                            [key_bytes[index] % 16 for index in self.key_bytes_indices])
+        frame_time = Math.round(frame_time / 10) * 10
+        arr = self.get_2d_array(key_bytes=key_bytes,
+                                home_page_response=home_page_response)
         frame_row = arr[row_index]
 
         target_time = float(frame_time) / total_time
-        animation_key = self.animate(frame_row, target_time)
+        animation_key = self.animate(frames=frame_row, target_time=target_time)
         return animation_key
 
-    def generate_transaction_id(self, method: str, path: str, response=None, key=None, animation_key=None, time_now=None):
+    def generate_transaction_id(self, method: str, path: str, home_page_response: Optional[bs4.BeautifulSoup] = None, key: Optional[str] = None, animation_key: Optional[str] = None, time_now: Optional[int] = None) -> str:
         time_now = time_now or math.floor(
             (time.time() * 1000 - 1682924400 * 1000) / 1000)
         time_now_bytes = [(time_now >> (i * 8)) & 0xFF for i in range(4)]
-        key = key or self.key or self.get_key(response)
-        key_bytes = self.get_key_bytes(key)
+        key = key or self.key or self.get_key(
+            home_page_response=home_page_response)
+        key_bytes = self.get_key_bytes(key=key)
         animation_key = animation_key or self.animation_key or self.get_animation_key(
-            key_bytes, response)
+            key_bytes=key_bytes, home_page_response=home_page_response)
         # hash_val = hashlib.sha256(f"{method}!{path}!{time_now}bird{animation_key}".encode()).digest()
         hash_val = hashlib.sha256(
-            f"{method}!{path}!{time_now}{self.DEFAULT_KEYWORD}{animation_key}".encode()).digest()
+            f"{method}!{path}!{time_now}{self.random_keyword}{animation_key}".encode()).digest()
         # hash_bytes = [int(hash_val[i]) for i in range(len(hash_val))]
         hash_bytes = list(hash_val)
         random_num = random.randint(0, 255)
         bytes_arr = [*key_bytes, *time_now_bytes, *
-                     hash_bytes[:16], self.ADDITIONAL_RANDOM_NUMBER]
+                     hash_bytes[:16], self.random_number]
         out = bytearray(
             [random_num, *[item ^ random_num for item in bytes_arr]])
         return base64_encode(out).strip("=")
+
+
+if __name__ == "__main__":
+    pass

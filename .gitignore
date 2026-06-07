@@ -1,6 +1,4 @@
 /*.py
-# !/config.py
-# !/main.py
 /*.json
 __pycache__
 /.vscode
@@ -8,3 +6,16 @@ __pycache__
 /*.txt
 /*.mp4
 /*.html
+
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+.venv
+/*.png
+/*.jpg
+/*.mp4
+/*.gif

@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from logging import getLogger
 from typing import Any, Callable, Generic, Protocol, Type, TypeVar
 
-model_logger = getLogger(__name__ + '._model')
+model_logger = getLogger(__name__ + '.model')
 
 M = TypeVar('M', bound='ModelProtocol')
 O = TypeVar('O', bound='LazyMixin')

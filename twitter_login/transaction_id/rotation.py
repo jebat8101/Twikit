@@ -1,13 +1,13 @@
 import math
-from typing import Union
+from typing import Union, List
 
 
-def convert_rotation_to_matrix(rotation: Union[float, int]):
+def convert_rotation_to_matrix(rotation: Union[float, int]) -> List[Union[float, int]]:
     rad = math.radians(rotation)
     return [math.cos(rad), -math.sin(rad), math.sin(rad), math.cos(rad)]
 
 
-def convertRotationToMatrix(degrees: Union[float, int]):
+def convertRotationToMatrix(degrees: Union[float, int]) -> List[Union[float, int]]:
     # first convert degrees to radians
     radians = degrees * math.pi / 180
     # now we do this:

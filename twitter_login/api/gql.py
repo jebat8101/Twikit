@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import json
+import urllib.parse
 from logging import getLogger
 from typing import TYPE_CHECKING, Any
 
 from curl_cffi import Response
 
+from ..enums import SEARCH_TIMELINE_PRODUCT_TO_PARAM, SearchTimelineQuerySource
 from ..gql_endpoints.endpoint import Endpoint, GQLState
 from ..headers import HeadersConfig
 from .utils import UNSET, remove_unset
@@ -197,6 +199,40 @@ class GQLClient:
             variables,
             add_query_id=True,
             referer='https://x.com/compose/post'
+        )
+
+    async def SearchTimeline(self, *, rawQuery, count, cursor, querySource, product):
+        withGrokTranslatedBio = product in ('Top', 'People') and self.feature_switches.get(
+            'responsive_web_grok_bio_auto_translation_in_search_is_enabled'
+        )
+        withQuickPromoteEligibilityTweetFields = False
+        variables = {
+            'rawQuery': rawQuery,
+            'count': count,
+            'cursor': cursor or UNSET,
+            'querySource': querySource,
+            'product': product,
+            'withGrokTranslatedBio': withGrokTranslatedBio,
+            'withQuickPromoteEligibilityTweetFields': withQuickPromoteEligibilityTweetFields
+        }
+
+        # ========== building referer url ==========
+        referer_params = {}
+        if querySource == SearchTimelineQuerySource.HASHTAG_CLICK:
+            url = f'https://x.com/hashtag/{urllib.parse.quote(rawQuery)}'
+        else:
+            url = 'https://x.com/search'
+            referer_params['q'] = urllib.parse.quote(rawQuery)
+
+        referer_params['src'] = querySource
+        referer_params['f'] = SEARCH_TIMELINE_PRODUCT_TO_PARAM[product]
+        referer = f'{url}?{urllib.parse.urlencode(referer_params)}'
+        # ==========================================
+
+        return await self.get(
+            self.endpoints['SearchTimeline'],
+            variables,
+            referer=referer
         )
 
     def test(self):

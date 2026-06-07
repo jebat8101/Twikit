@@ -5,9 +5,12 @@ class Cubic:
     def __init__(self, curves: List[Union[float, int]]):
         self.curves = curves
 
-    def get_value(self, time: Union[float, int]):
-        start_gradient = end_gradient = start = mid = 0.0
-        end = 1.0
+    def get_value(self, time: Union[float, int]) -> Union[float, int]:
+        start_gradient: float = 0.0
+        end_gradient: float = 0.0
+        start: float = 0.0
+        mid: float = 0.0
+        end: float = 1.0
 
         if time <= 0.0:
             if self.curves[0] > 0.0:
@@ -35,7 +38,7 @@ class Cubic:
         return self.calculate(self.curves[1], self.curves[3], mid)
 
     @staticmethod
-    def calculate(a, b, m):
+    def calculate(a: Union[float, int], b: Union[float, int], m: Union[float, int]) -> Union[float, int]:
         return 3.0 * a * (1 - m) * (1 - m) * m + 3.0 * b * (1 - m) * m * m + m * m * m
 
 # Example usage:

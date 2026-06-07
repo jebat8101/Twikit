@@ -11,17 +11,18 @@ from .errors import HTTPError
 from .headers import HeadersBuilder, HeadersConfig
 from .ratelimits import RatelimitsManager
 from .transaction_id import ClientTransaction
+from .headers import UserAgent
 
 logger = getLogger(__name__)
-headers_logger = getLogger('headers_log')
+http_logger = getLogger(__name__+'.http')
 
 
 class HTTPClient(curl_cffi.AsyncSession):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, user_agent: UserAgent, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.ratelimits_manager = RatelimitsManager()
         self.client_transaction: ClientTransaction | None = None
-        self.headers_builder = HeadersBuilder()
+        self.headers_builder = HeadersBuilder(user_agent)
 
     async def request(
         self,
@@ -35,8 +36,8 @@ class HTTPClient(curl_cffi.AsyncSession):
 
         headers = self.build_headers(url, method, headers_config)
         logger.info(f'Build headers for {method} {url[:100]}...')
-        if headers_logger.isEnabledFor(INFO):
-            headers_logger.info(
+        if http_logger.isEnabledFor(INFO):
+            http_logger.info(
                 'Method: %s URL: %s\n\n%s\n\n', method, url,
                 json.dumps(headers, indent=4, ensure_ascii=False)
             )
@@ -88,6 +89,11 @@ class HTTPClient(curl_cffi.AsyncSession):
     @property
     def guest_token(self):
         return self.cookies.get('gt', domain=COOKIES_DOMAIN)
+
+    async def _request(self, method, url, *args, **kwargs):
+        # original request
+        http_logger.info(f'{method}:{url}')
+        return await super().request(method, url, *args, **kwargs)
 
 
 def load_json_response(response: Response) -> dict | list | Any:

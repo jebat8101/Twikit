@@ -16,6 +16,7 @@ from .headers import HeadersConfig
 from .http import HTTPClient
 from .login_flow import LoginFlow
 from .transaction_id import ClientTransaction
+from .transaction_id.utils import handle_x_migration_async, get_ondemand_file_url
 
 logger = getLogger(__name__)
 
@@ -97,9 +98,11 @@ class AuthManager:
                 raise KeyError('Failed to get ct0 cookie (probably auth_token is invalid).')
 
     async def initialize_client_transaction(self):
-        client_transaction = ClientTransaction()
-        headers = self.http.build_headers('https://x.com', 'GET', HeadersConfig.initial_html())
-        await client_transaction.init(AsyncSession(), headers)
+        session = AsyncSession()
+        home_page_response = await handle_x_migration_async(session=session)
+        ondemand_file_url = get_ondemand_file_url(response=home_page_response)
+        ondemand_file = await session.get(url=ondemand_file_url)
+        client_transaction = ClientTransaction(home_page_response, ondemand_file)
         self.http.client_transaction = client_transaction
 
     async def get_guest_token(self):

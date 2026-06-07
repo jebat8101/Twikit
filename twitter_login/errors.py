@@ -31,3 +31,18 @@ class NotLoggedIn(AccountError):
 
 class MediaUploadError(TwitterException):
     ...
+
+
+class ResponseError(TwitterException):
+    def __init__(self, errors):
+        self.errors = errors
+        messages = [
+            f'"{error["message"]}"'
+            for error in errors
+            if isinstance(error, dict) and 'message' in error
+        ]
+        message = (
+            'Response error: '
+            '\n'.join(messages)
+        )
+        super().__init__(message)

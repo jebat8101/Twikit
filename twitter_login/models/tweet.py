@@ -85,27 +85,27 @@ class Tweet(TweetEntitiesMixin, LazyMixin):
 
         return instance
 
-    def _fallback_to_note(self, attr_name):
+    def __fallback_to_note(self, attr_name):
         if self.note_tweet:
             return getattr(self.note_tweet, attr_name)
         return getattr(self, attr_name)
 
     @property
     def full_text(self) -> str:
-        return self._fallback_to_note('text')
+        return self.__fallback_to_note('text')
 
     @property
     def full_urls(self) -> list[URL]:
-        return self._fallback_to_note('urls')
+        return self.__fallback_to_note('urls')
 
     @property
     def full_hashtags(self) -> list[Hashtag]:
-        return self._fallback_to_note('hashtags')
+        return self.__fallback_to_note('hashtags')
 
     @property
     def full_symbols(self) -> list[Symbol]:
-        return self._fallback_to_note('symbols')
+        return self.__fallback_to_note('symbols')
 
     @property
     def full_mentions(self) -> list[Mention]:
-        return self._fallback_to_note('mentions')
+        return self.__fallback_to_note('mentions')
