@@ -244,7 +244,14 @@ Twikit/
 ├── uv.lock             # Locked dependencies (for uv)
 └── cookies.json        # Your session cookies (not in git)
 ```
+
+---
+
 ## Architecture
+
+Data flows from your browser session through the CLI into structured JSON files:
+
+```
 ┌─────────────────┐     cookies.json      ┌──────────────────┐
 │  export_cookies │ ────────────────────► │     run.py       │
 │  (Chrome ext)   │                       │  CLI entrypoint  │
@@ -263,3 +270,4 @@ Twikit/
                                         ┌──────────────────┐
                                         │  scraped/*.json  │
                                         └──────────────────┘
+```
