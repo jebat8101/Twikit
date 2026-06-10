@@ -1,3 +1,5 @@
+<img width="499" height="299" alt="Screenshot_201" src="https://github.com/user-attachments/assets/ffab0ec7-0787-4bc5-821e-f7a82b3b0475" />
+
 # Twikit
 
 Python library and CLI for authenticating with X (Twitter) via cookies and scraping search results to JSON.
