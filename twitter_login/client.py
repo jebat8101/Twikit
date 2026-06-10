@@ -9,18 +9,18 @@ from typing import TYPE_CHECKING, Literal, overload, Any
 from .api import API
 from .auth_manager import AuthManager
 from .enums import BatchCompose, ConversationControl, InstructionType, SearchTimelineProduct, SearchTimelineQuerySource
-from .errors import MediaUploadError
+from .errors import MediaUploadError, ResponseError
 from .gql_endpoints import GQLEndpointsManager
 from .headers import UserAgent
 from .http import HTTPClient
 from .media import MediaCategory, MediaUploader
-from .models import Tweet, UploadedMedia, build_tweet_media_parameter
+from .models import Tweet, UploadedMedia, User, build_tweet_media_parameter
 from .pagination import PaginatedResult, PaginationContext
 from .parsers import get_cursors_from_entries, get_cursors_from_replace_entries, get_instructions, group_entries, handle_response_errors, parse_entries
-from .utils import optional_chaining
+from .utils import optional_chaining, parse_cookies_file
 
 if TYPE_CHECKING:
-    from .models import Tweet, User
+    from .models import Tweet
 
 
 logger = getLogger(__name__)
@@ -72,8 +72,13 @@ class Client:
     async def load_cookies(self, path: str) -> None:
         if not isinstance(path, str):
             raise ValueError(f'Path must be str, not {path.__class__.__name__}')
-        with open(path, encoding='utf-8') as f:
-            cookies = json.load(f)
+        cookie_path = Path(path)
+        if not cookie_path.is_file():
+            raise FileNotFoundError(
+                f'cookies file not found: {cookie_path}. '
+                'Export cookies from x.com and save as cookies.json next to run.py.'
+            )
+        cookies = parse_cookies_file(cookie_path.read_text(encoding='utf-8'))
         await self.load_cookies_dict(cookies)
 
     def save_cookies(self, path):
@@ -284,3 +289,16 @@ class Client:
             query_source=query_source
         )
         return PaginatedResult(items_iter, ctx)
+
+    async def get_user_by_screen_name(self, screen_name: str) -> User:
+        response = await self._api.gql.UserByScreenName(screen_name=screen_name)
+        payload = response.json()
+        handle_response_errors(payload)
+
+        user_data = optional_chaining(payload, 'data', 'user', 'result')
+        if not user_data:
+            raise ResponseError([{'message': f'User @{screen_name} not found'}])
+        if user_data.get('__typename') == 'UserUnavailable':
+            raise ResponseError([{'message': user_data.get('message', 'User unavailable')}])
+
+        return User._from_payload(user_data, self)

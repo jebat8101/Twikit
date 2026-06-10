@@ -20,15 +20,26 @@ COOKIES_PATH = Path(__file__).parent / "cookies.json"
 OUTPUT_DIR = Path(__file__).parent / "scraped"
 
 SEARCHES = {
-    "account": ("Tweets from a specific account", "from:n_izzah", SearchTimelineProduct.LIVE, 50),
-    "hashtag": ("Hashtag", "#PRN", SearchTimelineProduct.TOP, 50),
-    "keyword": ("Keyword + filter", "IRAN", SearchTimelineProduct.TOP, 50),
-    "date": ("Date range", "IRAN since:2020-01-01 until:2026-06-08", SearchTimelineProduct.LIVE, 50),
+    "account": ("Tweets from a specific account", "from:n_izzah", SearchTimelineProduct.LIVE, 500),
+    "hashtag": ("Hashtag", "#PRN", SearchTimelineProduct.TOP, 500),
+    "keyword": ("Keyword + filter", "IRAN", SearchTimelineProduct.TOP, 500),
+    "date": ("Date range", "IRAN since:2023-01-01 until:2026-06-08", SearchTimelineProduct.LIVE, 500),
 }
 
 
-def tweet_to_dict(tweet) -> dict:
+def user_to_dict(user) -> dict:
     return {
+        "id": user.id,
+        "screen_name": user.screen_name,
+        "name": user.name,
+        "followers_count": user.followers_count,
+        "following_count": user.following_count,
+        "created_at": user.created_at,
+    }
+
+
+def tweet_to_dict(tweet) -> dict:
+    row = {
         "id": tweet.id,
         "text": tweet.full_text,
         "created_at": tweet.created_at,
@@ -41,6 +52,18 @@ def tweet_to_dict(tweet) -> dict:
         "mentions": [m.screen_name for m in tweet.full_mentions],
         "urls": [u.expanded_url for u in tweet.full_urls],
     }
+    user = tweet.user
+    if user:
+        row["screen_name"] = user.screen_name
+        row["user_name"] = user.name
+        row["followers_count"] = user.followers_count
+    return row
+
+
+def screen_name_from_query(query: str) -> str | None:
+    if query.startswith("from:"):
+        return query.removeprefix("from:").split()[0]
+    return None
 
 
 async def scrape_search(client: Client, key: str, pages: int) -> list[dict]:
@@ -68,7 +91,7 @@ async def scrape_search(client: Client, key: str, pages: int) -> list[dict]:
     return rows
 
 
-def save_scrape(key: str, rows: list[dict], query: str) -> Path:
+def save_scrape(key: str, rows: list[dict], query: str, user: dict | None = None) -> Path:
     OUTPUT_DIR.mkdir(exist_ok=True)
     out = OUTPUT_DIR / f"{key}.json"
     payload = {
@@ -77,19 +100,46 @@ def save_scrape(key: str, rows: list[dict], query: str) -> Path:
         "count": len(rows),
         "tweets": rows,
     }
+    if user:
+        payload["user"] = user
     out.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
     print(f"Saved → {out}")
     return out
 
 
-async def main(keys: list[str], pages: int) -> None:
+async def lookup_user(client: Client, screen_name: str) -> dict:
+    user = await client.get_user_by_screen_name(screen_name)
+    info = user_to_dict(user)
+    print(f"\n{'=' * 60}")
+    print(f"@{info['screen_name']} ({info['name']})")
+    print(f"User ID: {info['id']}")
+    print(f"Followers: {info['followers_count']:,}")
+    print('=' * 60)
+    return info
+
+
+async def main(keys: list[str], pages: int, user_screen_name: str | None = None) -> None:
     client = Client(UA)
     await client.load_cookies(str(COOKIES_PATH))
+
+    if user_screen_name:
+        info = await lookup_user(client, user_screen_name)
+        OUTPUT_DIR.mkdir(exist_ok=True)
+        out = OUTPUT_DIR / f"user_{user_screen_name}.json"
+        out.write_text(json.dumps(info, indent=2, ensure_ascii=False), encoding="utf-8")
+        print(f"Saved → {out}")
+        client.save_cookies(str(COOKIES_PATH))
+        await client.close()
+        return
 
     for key in keys:
         query = SEARCHES[key][1]
         rows = await scrape_search(client, key, pages)
-        save_scrape(key, rows, query)
+        user = None
+        screen_name = screen_name_from_query(query)
+        if screen_name:
+            user = await lookup_user(client, screen_name)
+        save_scrape(key, rows, query, user=user)
         if len(keys) > 1:
             await asyncio.sleep(2)
 
@@ -112,6 +162,11 @@ if __name__ == "__main__":
         default=1,
         help="number of result pages per search (default: 1)",
     )
+    parser.add_argument(
+        "--user",
+        metavar="SCREEN_NAME",
+        help="look up user id and follower count for a screen name",
+    )
     args = parser.parse_args()
     keys = list(SEARCHES.keys()) if args.search == "all" else [args.search]
-    asyncio.run(main(keys, args.pages))
+    asyncio.run(main(keys, args.pages, user_screen_name=args.user))

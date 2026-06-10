@@ -235,6 +235,19 @@ class GQLClient:
             referer=referer
         )
 
+    async def UserByScreenName(self, *, screen_name):
+        variables = {
+            'screen_name': screen_name,
+            'withSafetyModeUserFields': False,
+        }
+        field_toggles = {'withAuxiliaryUserLabels': False}
+        return await self.get(
+            self.endpoints['UserByScreenName'],
+            variables,
+            field_toggles=field_toggles,
+            referer=f'https://x.com/{screen_name}',
+        )
+
     def test(self):
         """self.endpoints['SearchTimeline']
         self.endpoints['SimilarPosts']
