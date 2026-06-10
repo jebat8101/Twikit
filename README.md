@@ -1,6 +1,6 @@
 <img width="679" height="406" alt="Screenshot_202" src="https://github.com/user-attachments/assets/b3fcad31-935a-4c02-abfc-4ba82ffaf1aa" />
 
-# Twikit
+# Twitkit
 Twikit is a cookie-based X (Twitter) scraper for Kali Linux and OSINT work. It uses your browser session (no official API) to search X and export structured JSON.
 Python library and CLI for authenticating with X (Twitter) via cookies and scraping search results to JSON.
 
