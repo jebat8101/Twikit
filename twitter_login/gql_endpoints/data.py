@@ -70,7 +70,7 @@ REQUIRED_ENDPOINTS_MAPPING = {
         'membersSliceTimeline_Query',
         'moderatorsSliceTimeline_Query'
     ],
-    'shared~loader.DMDrawer~bundle.DMRichTextCompose~bundle.DirectMessages': [
+    'shared~bundle.DMRichTextCompose~bundle.DirectMessages': [
         'DMMessageDeleteMutation'
     ],
     'bundle.TweetEditHistory': [
@@ -84,12 +84,12 @@ REQUIRED_ENDPOINTS_MAPPING = {
 }
 
 BUILDTIME_HASH_MAPPING = {
-    'bundle.DirectMessages': '87bb08b',
-    'shared~bundle.GrokDrawer~bundle.ReaderMode~bundle.Birdwatch~bundle.TwitterArticles~bundle.Compose~bundle.Sett': 'e4bfcec',
-    'main': '7e48596',
-    'bundle.Communities': '788104a',
-    'shared~loader.DMDrawer~bundle.DMRichTextCompose~bundle.DirectMessages': '4bed334',
-    'bundle.TweetEditHistory': '2a5b6d0',
+    'bundle.DirectMessages': '4e24bca',
+    'shared~bundle.GrokDrawer~bundle.ReaderMode~bundle.Birdwatch~bundle.TwitterArticles~bundle.Compose~bundle.Sett': 'b9774b5',
+    'main': 'a618cf6',
+    'bundle.Communities': '261580a',
+    'shared~bundle.DMRichTextCompose~bundle.DirectMessages': '3543019',
+    'bundle.TweetEditHistory': '580f9b8',
     'ondemand.DirectMessagesCrypto': '27d17b6'
 }
 
