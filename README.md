@@ -8,6 +8,32 @@ Repository: [https://github.com/jebat8101/Twikit](https://github.com/jebat8101/T
 
 ---
 
+## What it does
+
+| Capability | Description |
+|------------|-------------|
+| **Authenticate** | Uses `cookies.json` (`auth_token` + `ct0`) from JSON or Netscape export |
+| **Search & scrape** | Account, hashtag, keyword, and date-range queries |
+| **Export JSON** | Saves structured results under `scraped/` |
+| **Author metadata** | Each tweet includes `screen_name`, `user_name`, and `followers_count` |
+| **User lookup** | `python run.py --user username` for profile and follower count |
+| **Library use** | Import `twitter_login.Client` in your own Python scripts |
+
+### Commands
+
+| Command | Purpose |
+|---------|---------|
+| `python run.py` | Run all four built-in searches |
+| `python run.py hashtag` | Run a single search |
+| `python run.py all --pages 3` | Scrape multiple result pages |
+| `python run.py --user n_izzah` | Look up a user profile |
+
+### Tweet output fields
+
+Each scraped tweet includes: `id`, `text`, `created_at`, `likes`, `retweets`, `replies`, `views`, `user_id`, `screen_name`, `user_name`, `followers_count`, `hashtags`, `mentions`, and `urls`.
+
+---
+
 ## Prerequisites
 
 | Requirement | Notes |
