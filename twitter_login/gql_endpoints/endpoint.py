@@ -25,7 +25,7 @@ class Endpoint:
         if names is None:
             return
         return {
-            name: self.feature_switches.get(name)
+            name: bool(self.feature_switches.get(name))
             for name in names
         }
 

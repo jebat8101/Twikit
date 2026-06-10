@@ -229,9 +229,10 @@ class GQLClient:
         referer = f'{url}?{urllib.parse.urlencode(referer_params)}'
         # ==========================================
 
-        return await self.get(
+        return await self.post(
             self.endpoints['SearchTimeline'],
             variables,
+            add_query_id=True,
             referer=referer
         )
 
