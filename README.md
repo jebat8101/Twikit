@@ -223,11 +223,10 @@ asyncio.run(main())
 ```bash
 git clone https://github.com/jebat8101/Twikit.git
 cd Twikit
-python3 -m venv venv
-source venv/bin/activate
+python3 -m venv venv && source venv/bin/activate
 pip install -e .
 # export cookies and save as cookies.json
-python run.py
+python3 run.py
 ```
 
 ---
