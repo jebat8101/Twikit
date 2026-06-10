@@ -1,4 +1,4 @@
-<img width="499" height="299" alt="Screenshot_201" src="https://github.com/user-attachments/assets/ffab0ec7-0787-4bc5-821e-f7a82b3b0475" />
+<img width="679" height="406" alt="Screenshot_202" src="https://github.com/user-attachments/assets/b3fcad31-935a-4c02-abfc-4ba82ffaf1aa" />
 
 # Twikit
 
