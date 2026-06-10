@@ -35,8 +35,7 @@ cd Twikit
 ## Step 2 — Create a virtual environment
 
 ```bash
-python3 -m venv venv
-source venv/bin/activate
+python3 -m venv venv && source venv/bin/activate
 ```
 
 On Windows:
