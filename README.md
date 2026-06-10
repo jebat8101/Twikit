@@ -144,28 +144,7 @@ python run.py hashtag
 python run.py keyword
 python run.py date
 ```
-##If error
-Run This
-```bash
-python3 -c "
-import json
-from pathlib import Path
 
-src = Path('export_cookies/cookies.json')  # or wherever your export is
-cookies = {}
-for line in src.read_text().splitlines():
-    line = line.strip()
-    if not line or line.startswith('#'):
-        continue
-    parts = line.split('\t')
-    if len(parts) >= 7:
-        cookies[parts[5]] = parts[6]
-
-out = Path('cookies.json')
-out.write_text(json.dumps(cookies, indent=2))
-print(f'Wrote {out} with {len(cookies)} cookies')
-"
-```bash
 
 Scrape more result pages per search:
 
