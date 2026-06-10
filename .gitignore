@@ -1,5 +1,8 @@
 /*.py
+!/run.py
 /*.json
+cookies.json
+export_cookies/cookies.json
 __pycache__
 /.vscode
 .cache
