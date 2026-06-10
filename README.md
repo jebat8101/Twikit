@@ -26,6 +26,7 @@ Repository: [https://github.com/jebat8101/Twikit](https://github.com/jebat8101/T
 | `python run.py` | Run all four built-in searches |
 | `python run.py hashtag` | Run a single search |
 | `python run.py all --pages 3` | Scrape multiple result pages |
+| `python run.py date -q "IRAN" --since 2023-01-01 --until 2023-07-01 --pages 5` | Scrape a keyword over a date range |
 | `python run.py --user n_izzah` | Look up a user profile |
 
 ### Tweet output fields
@@ -173,20 +174,53 @@ python3 run.py keyword
 python3 run.py date
 ```
 
-
-Scrape more result pages per search:
+Scrape more result pages (~20 tweets per page):
 
 ```bash
 python3 run.py all --pages 3
 python3 run.py keyword --pages 2
 ```
 
-Output files:
+### Date-range scrape
 
-- `scraped/account.json`
-- `scraped/hashtag.json`
-- `scraped/keyword.json`
-- `scraped/date.json`
+Scrape a keyword between two dates. Ranges are auto-split into 30-day chunks so results cover the full period (not just the newest tweets).
+
+```bash
+python3 run.py date -q "IRAN" --since 2023-01-01 --until 2023-07-01 --pages 5
+```
+
+Or pass the full query:
+
+```bash
+python3 run.py date -q "IRAN since:2023-01-01 until:2023-06-30" --pages 3
+```
+
+| Flag | Description |
+|------|-------------|
+| `-q`, `--query` | Keyword or full search query |
+| `--since` | Start date (`YYYY-MM-DD`) |
+| `--until` | End date, exclusive (`YYYY-MM-DD`) — use next day to include full last day |
+| `--pages` | Pages per search or per date chunk (~20 tweets/page) |
+| `--chunk-days` | Split range into N-day windows (default `30` for `date`; use `0` to disable) |
+
+**Example:** `--until 2023-07-01` includes all of June 30. `--until 2023-06-30` stops before June 30.
+
+### Output files
+
+| Search type | Output path |
+|-------------|-------------|
+| Account | `scraped/account.json` |
+| Hashtag | `scraped/hashtag.json` |
+| Keyword | `scraped/keyword.json` |
+| Date range | `scraped/{keyword}_since_{since}_until_{until}.json` |
+
+Date-range example:
+
+```text
+scraped/IRAN_since_2023-01-01_until_2023-07-01.json
+```
+
+Each JSON file includes `title`, `since`, `until`, `year_distribution`, and `tweets`.
 
 ---
 
@@ -242,6 +276,8 @@ asyncio.run(main())
 | `Failed to get ct0 cookie` | `auth_token` is expired — log in again and re-export |
 | `STPyV8` install fails | Install `build-essential`, then `pip install --force-reinstall stpyv8` |
 | Rate limits or empty results | Lower `--pages`, add delays between runs, or refresh cookies |
+| Date scrape only returns recent tweets | Use `--pages 5` or higher; date searches auto-chunk into 30-day windows |
+| `SearchTimeline` 404 error | Update to latest `main` — search now uses POST instead of GET |
 | `cookies.json` not found | Create the file in the project root next to `run.py` |
 
 ---
