@@ -133,24 +133,24 @@ Save them as `cookies.json` in the project root (same folder as `run.py`).
 Run all four built-in searches (output saved under `scraped/`):
 
 ```bash
-python run.py
+python3 run.py
 ```
 
 Run a single search:
 
 ```bash
-python run.py account
-python run.py hashtag
-python run.py keyword
-python run.py date
+python3 run.py account
+python3 run.py hashtag
+python3 run.py keyword
+python3 run.py date
 ```
 
 
 Scrape more result pages per search:
 
 ```bash
-python run.py all --pages 3
-python run.py keyword --pages 2
+python3 run.py all --pages 3
+python3 run.py keyword --pages 2
 ```
 
 Output files:
