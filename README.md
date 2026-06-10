@@ -4,7 +4,7 @@
 Twikit is a cookie-based X (Twitter) scraper for Kali Linux and OSINT work. It uses your browser session (no official API) to search X and export structured JSON.
 Python library and CLI for authenticating with X (Twitter) via cookies and scraping search results to JSON.
 
-Repository: [https://github.com/jebat8101/Twikit](https://github.com/jebat8101/Twikit)
+Repository: [https://github.com/jebat8101/Twikit](https://github.com/jebat8101/Twitkit)
 
 ---
 
@@ -54,7 +54,7 @@ sudo apt install -y git python3 python3-venv python3-pip build-essential
 ## Step 1 — Clone the repository
 
 ```bash
-git clone https://github.com/jebat8101/Twikit.git
+git clone https://github.com/jebat8101/Twitkit.git
 cd Twikit
 ```
 
@@ -249,7 +249,7 @@ asyncio.run(main())
 ## Quick start (full flow)
 
 ```bash
-git clone https://github.com/jebat8101/Twikit.git
+git clone https://github.com/jebat8101/Twitkit.git
 cd Twikit
 python3 -m venv venv && source venv/bin/activate
 pip install -e .
